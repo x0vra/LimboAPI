@@ -32,6 +32,7 @@ import net.kyori.adventure.nbt.CompoundBinaryTag;
 
 public interface LimboFactory {
 
+  Object createDefaultSpawnPositionPacket(String dimension, int posX, int posY, int posZ, float yaw, float pitch);
   /**
    * Creates new virtual block from Block enum.
    *
