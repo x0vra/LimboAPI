@@ -28,13 +28,16 @@ public class DefaultSpawnPositionPacket implements MinecraftPacket {
   private final int posX;
   private final int posY;
   private final int posZ;
-  private final float angle;
+  private final float yaw;
+  private final float pitch;
 
-  public DefaultSpawnPositionPacket(int posX, int posY, int posZ, float angle) {
+  public DefaultSpawnPositionPacket(String dimension, int posX, int posY, int posZ, float yaw, float pitch) {
+    this.dimension = dimension;
     this.posX = posX;
     this.posY = posY;
     this.posZ = posZ;
-    this.angle = angle;
+    this.yaw = yaw;
+    this.pitch = pitch;
   }
 
   public DefaultSpawnPositionPacket() {
@@ -48,22 +51,20 @@ public class DefaultSpawnPositionPacket implements MinecraftPacket {
 
   @Override
   public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion protocolVersion) {
-    if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
+    if (protocolVersion.noLessThan(ProtocolVersion.MINECRAFT_1_21_9)) {
+      ProtocolUtils.writeString(buf, this.dimension);
+      buf.writeLong(((this.posX & 0x3FFFFFFL) << 38) | ((this.posZ & 0x3FFFFFFL) << 12) | (this.posY & 0xFFFL));
+      buf.writeFloat(this.yaw);
+      buf.writeFloat(this.pitch);
+    } else if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_8) < 0) {
       buf.writeInt(this.posX);
       buf.writeInt(this.posY);
       buf.writeInt(this.posZ);
-    } else {
-      long location;
-      if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_14) < 0) {
-        location = ((this.posX & 0x3FFFFFFL) << 38) | ((this.posY & 0xFFFL) << 26) | (this.posZ & 0x3FFFFFFL);
-      } else {
-        location = ((this.posX & 0x3FFFFFFL) << 38) | ((this.posZ & 0x3FFFFFFL) << 12) | (this.posY & 0xFFFL);
-      }
-
+@@ -63,7 +72,7 @@ public void encode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersi
       buf.writeLong(location);
 
       if (protocolVersion.compareTo(ProtocolVersion.MINECRAFT_1_17) >= 0) {
-        buf.writeFloat(this.angle);
+        buf.writeFloat(this.yaw);
       }
     }
   }
@@ -75,11 +76,14 @@ public class DefaultSpawnPositionPacket implements MinecraftPacket {
 
   @Override
   public String toString() {
-    return "DefaultSpawnPosition{"
-        + "posX=" + this.posX
+    return "DefaultSpawnPositionPacket{"
+        + "dimension='" + this.dimension + '\''
+        + ", posX=" + this.posX
         + ", posY=" + this.posY
         + ", posZ=" + this.posZ
-        + ", angle=" + this.angle
         + "}";
+        + ", yaw=" + this.yaw
+        + ", pitch=" + this.pitch
+        + '}';
   }
 }
